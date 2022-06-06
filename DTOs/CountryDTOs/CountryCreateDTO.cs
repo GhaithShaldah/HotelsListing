@@ -12,7 +12,11 @@ namespace HotelsListing.DTOs.CountryDTOs
         [Required]
         [StringLength(maximumLength: 2, ErrorMessage = "Error!.Country Short Name is too long")]
         public string ShortName { get; set; }
-
         
+        [Required]
+        public IList<HotelDTO> Hotels { get; set; }
+
+
+
     }
 }

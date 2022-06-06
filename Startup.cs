@@ -1,3 +1,4 @@
+using AspNetCoreRateLimit;
 using HotelsListing.Authentication_Services;
 using HotelsListing.Configurations;
 using HotelsListing.Data;
@@ -48,14 +49,27 @@ namespace HotelsListing
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "HotelsListing", Version = "v1" });
             });
+
+            services.AddMemoryCache();
+            services.ConfigureRateLimiting();
+            services.AddHttpContextAccessor();
             services.AddTransient<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IAuthenticationManager, AuthenticationManager>();
             services.AddAutoMapper(typeof(MapperInitlizer));
             services.AddAuthentication();
+            services.AddAuthorization();
             services.ConfigureIdentity();
             services.ConfigureJwt(Configuration);
+            services.ConfigureHttpCacheHeader();
 
-            services.AddControllers();
+            services.AddControllers(config => {
+                config.CacheProfiles.Add("120SecondsDuration", new CacheProfile
+                {
+                    Duration = 120
+                }) ;
+            });
+
+            services.ConfigureVersioning();
 
         }
 
@@ -69,9 +83,13 @@ namespace HotelsListing
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "HotelsListing v1"));
             }
 
+            app.ConfigureExceptionHandler();
             app.UseHttpsRedirection();
             
             app.UseCors("CorsPolicy");
+            app.UseResponseCaching();
+            app.UseHttpCacheHeaders();
+            app.UseIpRateLimiting();
 
             app.UseRouting();
 

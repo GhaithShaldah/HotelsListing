@@ -1,7 +1,11 @@
 ﻿using AutoMapper;
 using HotelsListing.Data.Entities;
+using HotelsListing.DTOs;
 using HotelsListing.DTOs.CountryDTOs;
+using HotelsListing.DTOs.HotelDTOs;
 using HotelsListing.Repository_Pattern.IRepository;
+using Marvin.Cache.Headers;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -27,12 +31,14 @@ namespace HotelsListing.Controllers
             _mapper = mapper;
         }
         [HttpGet]
+        [HttpCacheExpiration(CacheLocation = CacheLocation.Public,MaxAge = 60)]
+        [HttpCacheValidation(MustRevalidate = false)]
         
-        public async Task<IActionResult> GetCountries() {
+        public async Task<IActionResult> GetCountries([FromQuery] RequestParams requestParams) {
          
            try
             {
-                var countries = await _unitOfWork.Countries.GetAll();
+                var countries = await _unitOfWork.Countries.GetPagedList(requestParams);
                 var CountriesDTO = _mapper.Map<IList<CountryDTO>>(countries);
                 return Ok(CountriesDTO);
             }
@@ -49,10 +55,10 @@ namespace HotelsListing.Controllers
             try
             {
                 var Country = await _unitOfWork.Countries
-                      .Get(q => q.Id == id, new List<string> { "Hotels" });
+                      .Get(q => q.Id == id,new List<string> {"Hotels"});
 
-                var CountryDto = _mapper.Map<CountryDTO>(Country);
-                return Ok(CountryDto);
+                var result = _mapper.Map<CountryDTO>(Country);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -62,7 +68,7 @@ namespace HotelsListing.Controllers
             }
           
         }
-        [Authorize(Roles = "Administrator")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status201Created)]

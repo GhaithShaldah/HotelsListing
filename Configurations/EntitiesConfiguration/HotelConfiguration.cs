@@ -30,7 +30,7 @@ namespace HotelsListing.Configurations.EntitiesConfiguration
                          Id = 3,
                          Name = "Grand Pallidum",
                          Address = "Negril",
-                         CountryId = 2,
+                         CountryId = 1,
                          Rating = 4
                      }
                 );
